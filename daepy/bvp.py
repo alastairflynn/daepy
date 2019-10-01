@@ -5,14 +5,24 @@ from scipy.integrate import solve_ivp
 from scipy.interpolate import interp1d
 from nonlinear import fsolve
 
+class BVPSolution():
+    '''
+    Solution to a BVP. This class collects the collocation solution, coordinate transform and coordinate scaling together.
+    '''
+    def __init__(self, solution, scale):
+        self.solution = solution
+        self.scale = scale
+        self.transform = CollocationSolution(2, self.solution.degree, self.solution.breakpoints, continuous=[True, False])
+
 class BVP():
-    def __init__(self, dae, solution, scale, transform=None, avoid=None, avoid_derivative=None):
+    '''
+    This class is used to construct and solve the nonlinear system.
+    '''
+    def __init__(self, dae, solution, scale, transform=None):
         self.dae = dae
         self.solution = solution
         self.scale = scale
         self.transform = CollocationSolution(2, self.solution.degree, self.solution.breakpoints, continuous=[True, False])
-        self.avoid = avoid
-        self.avoid_derivative = avoid_derivative
 
         self.K = self.solution.collocation_points.shape[0]
         self.breakpoints = np.copy(self.solution.breakpoints)
@@ -42,9 +52,6 @@ class BVP():
 
         res = np.concatenate([residual, tres0, tres1, cc, cc_transform, bv_res])
 
-        if self.avoid is not None:
-            res /= self.avoid(self.solution, self.transform, self.scale)
-
         return res
 
     def jac(self, coeffs):
@@ -63,11 +70,6 @@ class BVP():
         J = bmat([[jac, transform_jac, None], [t_jac, t_transform_jac, t_scale_jac[:,None]], [cc_jac, None, None], [None, cc_transform_jac, None], [bv_jac, bv_transform_jac, None]], format='csc')
 
         J.eliminate_zeros()
-
-        if self.avoid is not None:
-            a = self.avoid(self.solution, self.transform, self.scale)
-            J /= a
-            J -= csc_matrix(self.eval(coeffs)[:,None] / a**2 * self.avoid_derivative(self.solution, self.transform, self.scale)[None,:])
 
         return J
 

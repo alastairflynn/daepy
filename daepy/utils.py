@@ -2,7 +2,7 @@ import numpy as np
 from collocation import CollocationSolution
 import dill
 
-def load_data(filename='data/solution.npy'):
+def load_data(filename):
     with open(filename, 'rb') as file:
         data = dill.load(file)
     solution = data['solution']
