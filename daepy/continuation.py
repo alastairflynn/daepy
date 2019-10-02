@@ -2,33 +2,51 @@ import numpy as np
 from scipy.linalg import norm, det
 from scipy.sparse import csr_matrix, bmat
 from scipy.sparse.linalg import spsolve
-from nonlinear import fsolve
+from .nonlinear import fsolve
 
 class BVPContinuation():
-    def __init__(self, bvp, update_parameter, param_jac, method='pseudo_arclength'):
+    '''
+    Used to perform continuation runs. It is initialised with a :class:`.BVP` *bvp* and method is one of
+    * `'pseudo_arclength'` the pseudo-arclength method [1]_ (the default)
+    * `'naive'` naive continuation with no predictive step
+    Once initialised, a continuation run may be performed using the :meth:`continuation_run` method.
+
+    .. note::
+        The *bvp* must have been initialised with a *dae* object that defines the :meth:`.update_parameter` method and all the jacobian methods. In the future, continuation using a finite difference approximation of the jacobian may be supported although it would still be strongly recommended to use an analytic jacobian, if available.
+
+    .. [1] E. Allgower and K. Georg. *Introduction to Numerical Continuation Methods*. Classics in Applied Mathematics. Society for Industrial and Applied Mathematics, January 2003.
+    '''
+    def __init__(self, bvp, method='pseudo_arclength'):
         self.method = method
         self.bvp = bvp
-        self.update_parameter = update_parameter
-        self.param_jac = param_jac
         self.tangent = None
         self.arclength = 0.0
         self.y0 = None
 
     def eval(self, y):
-        self.update_parameter(self.bvp, y[-1])
+        '''
+        Evaluate the augmented system.
+        '''
+        self.bvp.update_parameter(y[-1])
         step = np.dot(self.tangent, y - self.y0) - self.arclength
         return np.concatenate([self.bvp.eval(y[:-1]), np.array([step])])
 
     def jac(self, y):
-        self.update_parameter(self.bvp, y[-1])
+        '''
+        Evaluate the augmented jacobian.
+        '''
+        self.bvp.update_parameter(y[-1])
         jac = self.bvp.jac(y[:-1])
-        param_jac = self.param_jac(y[:-1], y[-1])
+        param_jac = self.bvp.parameter_jacobian(self.bvp.collocation_points, self.bvp.bvpsol)
         return bmat([[jac, param_jac[:,None]], [self.tangent[None,:-1], self.tangent[-1]]], format='csc')
 
     def find_tangent(self, y):
-        self.update_parameter(self.bvp, y[-1])
+        '''
+        Find the tangent of the solution path.
+        '''
+        self.bvp.update_parameter(y[-1])
         jac = self.bvp.jac(y[:-1])
-        param_jac = self.param_jac(y[:-1], y[-1])
+        param_jac = self.bvp.parameter_jacobian(self.bvp.collocation_points, self.bvp.bvpsol)
         determinant = det(jac.toarray())
         jac = csr_matrix(jac)
         z = spsolve(jac, -param_jac)
@@ -36,6 +54,9 @@ class BVPContinuation():
         return determinant
 
     def continuation_step(self, y0, d, stepsize=1.0, adaptive=True, target=None, tol=1e-8, maxiter=100):
+        '''
+        Perform a sing continuation step.
+        '''
         if self.method == 'pseudo_arclength':
             self.y0 = np.copy(y0)
             determinant = self.find_tangent(self.y0)
@@ -45,7 +66,7 @@ class BVPContinuation():
 
             self.arclength = stepsize / self.tangent[-1]
             y1 = y0 + self.arclength*self.tangent
-            self.update_parameter(self.bvp, y1[-1])
+            self.bvp.update_parameter(y1[-1])
 
             if adaptive:
                 old_res = norm(self.eval(y0))
@@ -54,7 +75,7 @@ class BVPContinuation():
                     stepsize /= 2
                     self.arclength = stepsize #/ self.tangent[-1]
                     y1 = y0 + self.arclength*self.tangent
-                    self.update_parameter(self.bvp, y1[-1])
+                    self.bvp.update_parameter(y1[-1])
                     old_res = norm(self.eval(y0))
                     res = norm(self.eval(y1))
 
@@ -65,7 +86,7 @@ class BVPContinuation():
                 result = [y0, 0, 0.0, determinant]
         else:
             p = y0[-1] + stepsize
-            self.update_parameter(self.bvp, p)
+            self.bvp.update_parameter(p)
 
             x, m = fsolve(self.bvp.eval, y0[:-1], jac=self.bvp.jac, method='nleqres', tol=tol, maxiter=maxiter, disp=False)
             y = np.concatenate([x, np.array([p])])
@@ -73,6 +94,11 @@ class BVPContinuation():
         return result
 
     def continuation_run(self, x0, p0, steps=1, stepsize=1.0, target=None, tol=1e-8, maxiter=100, disp=False, callback=None):
+        '''
+        Perform a continuation run where *x0* is the initial guess (typically one would use :code:`bvp.state()`), *p0* is the initial value of the parameter, *steps* is either a maximum number of steps or a numpy array of parameter values which determine the steps explicitly, *stepsize* is the initial stepsize (the pseudo-arclength method will adapt the stepsize, ignored if steps are given explicitly), *target* is a value for the parameter at which the continuation will stop (optional), *tol* is the required solution tolerance, *maxiter* is the maximum number of iterations for the nonlinear solver, *disp* determines whether to print progress messages and *callback* is a function that will be called before each continuation step, for example to draw a new line on a plot at each step (optional).
+
+        The function returns the final solution and final parameter value. The `bvp` object is updated during the continuation run so :code:`bvp.state()` will correspond to the final solution and the parameter value in `bvp` will correspond to the final parameter value as well.
+        '''
         x, m = fsolve(self.bvp.eval, x0, jac=self.bvp.jac, method='nleqres', tol=tol, maxiter=maxiter, disp=False)
         y = np.concatenate([x, np.array([p0])])
         residual = self.bvp.eval(x)
@@ -94,7 +120,7 @@ class BVPContinuation():
             if not adaptive:
                 stepsize = steps[step-1] - y[-1]
             y, m, a, d = self.continuation_step(y, d, stepsize=stepsize, adaptive=adaptive, target=target, tol=tol, maxiter=maxiter)
-            self.update_parameter(self.bvp, y[-1])
+            self.bvp.update_parameter(y[-1])
             res = norm(self.bvp.eval(y[:-1]))
             if disp:
                 print('%02d'%step, y[-1], res, m, a)

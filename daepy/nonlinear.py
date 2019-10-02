@@ -1,13 +1,25 @@
 import numpy as np
-from scipy.linalg import norm, lu_factor, lu_solve, eigh, solve, qr, solve_triangular, det, eigvals
-from scipy.sparse import csc_matrix, csr_matrix, diags
-from scipy.sparse.linalg import spsolve, spilu, eigs
-from scipy.optimize import newton, brentq
+from scipy.linalg import norm, solve, qr, solve_triangular
+from scipy.sparse import csc_matrix, diags
+from scipy.sparse.linalg import spsolve
 import dill
 from multiprocessing import Pool
-from derivatives import approx_jac
+from .derivatives import approx_jac
 
-def fsolve(fun, x0, jac=None, adapt_mesh=None, method='nleqres', tol=1e-8, maxiter=100, disp=False):
+def fsolve(fun, x0, jac=None, method='nleqres', tol=1e-8, maxiter=100, disp=False):
+    '''
+    Solve a nonlinear system where *fun* is a function that evaluates the nonlinear system, *x0* is the initial guess, *jac* is a function that evaluates the jacobian of the system, *method* is one of
+
+    * `'nleqres'` a damped global Newton method [1]_ (the default)
+    * `'lm'` the Leveberg--Marquardt method [2]_
+    * `'partial_inverse'` Newton-like method which calculates a partial inverse of the Jacobian by calculating a QR decomposition and doing a partial backwards substitution when the step doesn’t converge
+    * `'steepest_descent'` steepest descent method
+    
+    *tol* is required residual tolerance, *maxiter* is the maximum number of iterations and *disp* controls whether convergence messages are printed. If *jac* is `None` then a finite difference approximation of the jacobian is used.
+
+    .. [1] P. Deuflhard. Systems of Equations: Global Newton Methods. In *Newton Methods for Nonlinear Problems*, Springer Series in Computational Mathematics, pages 109–172. Springer, Berlin, Heidelberg, 2011.
+    .. [2] J. Dennis and R. Schnabel. *Numerical Methods for Unconstrained Optimization and Nonlinear Equations*. Classics in Applied Mathematics. Society for Industrial and Applied Mathematics, January 1996.
+    '''
     if jac is None:
         stream = dill.dumps(fun)
         pool = Pool()
@@ -26,13 +38,8 @@ def fsolve(fun, x0, jac=None, adapt_mesh=None, method='nleqres', tol=1e-8, maxit
     old = np.copy(x0)
     old_cost = np.inf
     while cost > tol and m < maxiter and cost < old_cost - tol/10:
-        if adapt_mesh is not None and m % 10 == 0:
-            x = adapt_mesh()
-            old = np.copy(x)
-            old_cost = norm(fun(x), ord=2)
-        else:
-            old = np.copy(x)
-            old_cost = np.copy(cost)
+        old = np.copy(x)
+        old_cost = np.copy(cost)
 
         if jac is None:
             J = approx_jac(stream, x, 1e-8, pool)

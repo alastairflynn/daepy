@@ -1,8 +1,18 @@
 import numpy as np
-import dill
 from multiprocessing import Pool
+import dill
 
 def approx_jac(stream, x, epsilon, pool, *args, **kwargs):
+    '''
+    Compute a finite difference approximation of the jacobian of a serialised function *stream* at *x* with stepsize *epsilon* using a :class:`multiprocessing.pool.Pool` *pool*. Extra arguments and keyword arguments for the serialsed function may be passed following the other arguments.
+
+    .. warning::
+        On Windows, you must protect your code in a main block when using this function::
+
+            if __name__ == "__main__":
+                # your code here
+
+    '''
     fun = dill.loads(stream)
     cols = x.shape[0]
     current = fun(x, *args, **kwargs)
