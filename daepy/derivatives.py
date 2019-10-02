@@ -4,7 +4,7 @@ import dill
 
 def approx_jac(stream, x, epsilon, pool, *args, **kwargs):
     '''
-    Compute a finite difference approximation of the jacobian of a serialised function *stream* at *x* with stepsize *epsilon* using a :class:`multiprocessing.pool.Pool` *pool*. Extra arguments and keyword arguments for the serialsed function may be passed following the other arguments.
+    Compute a finite difference approximation of the jacobian of a serialised function *stream* at *x* with stepsize *epsilon* using a :class:`multiprocessing.pool.Pool` *pool*. Extra arguments and keyword arguments for the serialsed function may be passed following the other arguments. A python function can be serialised using :func:`dill.dumps`.
 
     .. warning::
         On Windows, you must protect your code in a main block when using this function::

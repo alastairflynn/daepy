@@ -288,7 +288,7 @@ class UnivariateCollocationSolution():
 
     def single_integral(self, coeffs):
         '''
-        Integrate a single polynomial with coefficients *coeffs*. To integrate the piecewise polynomial over the whole interval use :meth: `integral`.
+        Integrate a single polynomial with coefficients *coeffs*. To integrate the piecewise polynomial over the whole interval use :meth:`integral`.
         '''
         result = coeffs[0] * 2
         for d in range(2, len(coeffs)):
