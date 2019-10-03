@@ -17,7 +17,7 @@ class CollocationSolution():
         try:
             L = len(continuous)
             self.continuous = continuous
-        except:
+        except TypeError:
             self.continuous = [continuous for n in range(N)]
         self.N = N
         self.degree = degree
@@ -177,9 +177,14 @@ class UnivariateCollocationSolution():
 
     def interpolate(self, fun):
         '''
-        Interpolate a list of functions.
+        Interpolate a function.
         '''
-        self.fit(self.collocation_points, fun(self.collocation_points), degree=self.degree-int(self.continuous))
+        data = fun(self.collocation_points)
+        try:
+            K = data.shape[0]
+        except AttributeError:
+            data = data*np.ones(self.collocation_points.shape[0])
+        self.fit(self.collocation_points, data, degree=self.degree-int(self.continuous))
 
     def fitting_matrix(self):
         '''
@@ -199,7 +204,7 @@ class UnivariateCollocationSolution():
         try:
             K = x.shape[0]
             result = evaluate_piecewise(self.degree, self.coeffs, x, self.breakpoints)
-        except:
+        except (IndexError, AttributeError):
             x = np.array([x], dtype=np.float64)
             K = 1
             result = evaluate_piecewise(self.degree, self.coeffs, x, self.breakpoints)[0]

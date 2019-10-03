@@ -39,7 +39,7 @@ class BVPContinuation():
         '''
         self.bvp.dae.update_parameter(y[-1])
         jac = self.bvp.jac(y[:-1])
-        param_jac = self.bvp.parameter_jacobian(self.bvp.collocation_points, self.bvp.bvpsol)
+        param_jac = self.bvp.param_jac(self.bvp.collocation_points, self.bvp.bvpsol)
         return bmat([[jac, param_jac[:,None]], [self.tangent[None,:-1], self.tangent[-1]]], format='csc')
 
     def find_tangent(self, y):
@@ -48,7 +48,7 @@ class BVPContinuation():
         '''
         self.bvp.dae.update_parameter(y[-1])
         jac = self.bvp.jac(y[:-1])
-        param_jac = self.bvp.parameter_jacobian(self.bvp.collocation_points, self.bvp.bvpsol)
+        param_jac = self.bvp.param_jac(self.bvp.collocation_points, self.bvp.bvpsol)
         determinant = det(jac.toarray())
         jac = csr_matrix(jac)
         z = spsolve(jac, -param_jac, use_umfpack=True)

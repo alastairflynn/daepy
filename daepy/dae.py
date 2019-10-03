@@ -53,4 +53,5 @@ class DAETemplate():
         Calculate the derivative of the system with respect to the parameter where *y* is a :class:`.BVPSolution`. This is used for parameter continuation.
         '''
         param_jac = None
-        return param_jac
+        bv_param_jac = None
+        return param_jac, bv_param_jac

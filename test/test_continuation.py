@@ -1,7 +1,7 @@
 from sys import path
 path.insert(0, '..')
 import numpy as np
-from test_137 import DAE
+from test_system import DAE
 from daepy import BVP
 from matplotlib import pyplot as plt
 
@@ -11,7 +11,7 @@ dae = DAE(alpha)
 degree = 3
 intervals = 20
 bvp = BVP(dae, degree, intervals)
-bvp.initial_guess([lambda x: 0*x, lambda x: 0*x], initial_interval=[0,1])
+bvp.initial_guess([lambda x: 0], initial_interval=[0,1])
 
 def callback(p, sol):
     colour = (min((p-10)/40, 1.0), 0.0, max(1-(p-10)/40, 0.0))
@@ -19,7 +19,7 @@ def callback(p, sol):
     plt.plot(l, sol(l)[0], color=colour)
 
 steps = list(range(15,51,5))
-bvp.continuation_run(alpha, method='pseudo_arclength', steps=steps, tol=1e-14, maxiter=100, disp=True, callback=callback)
+bvp.continuation(alpha, method='pseudo_arclength', steps=steps, tol=1e-14, maxiter=100, disp=True, callback=callback)
 
 plt.legend([r'$\alpha = $' + str(s) for s in [alpha] + steps])
 plt.title('Parameter continuation example')

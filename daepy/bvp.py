@@ -36,7 +36,7 @@ class BVP():
         self.bvpsol.update_coeffs(c)
         return self.bvpsol
 
-    def continuation_run(self, param, method='pseudo_arclength', steps=1, stepsize=1.0, target=None, tol=1e-8, maxiter=100, disp=False, callback=None):
+    def continuation(self, param, method='pseudo_arclength', steps=1, stepsize=1.0, target=None, tol=1e-8, maxiter=100, disp=False, callback=None):
         '''
         Perform a continuation run starting from parameter value *param* where method is one of
 
@@ -109,7 +109,10 @@ class BVP():
 
         return J
 
-    def parameter_jacobian(self, x, y):
+    def param_jac(self, x, y):
+        '''
+        Construct the derivative of the nonlinear system with respect to a parameter.
+        '''
         J = np.zeros(self.dimension)
         jac, bv_jac = self.dae.parameter_jacobian(x, y)
         jac = jac.reshape(-1)
@@ -262,7 +265,7 @@ class BVP():
 
 class BVPSolution():
     '''
-    Solution to a BVP. This class collects the collocation solution, coordinate transform and coordinate scaling together.
+    Solution to a BVP. This class collects the collocation solution, coordinate transform and coordinate scaling together. The collocation solution (parametrised by the internal coordinate) can be accessed using the :attr:`solution` attribute and the components of the coordinate transform can be accessed using the :attr:`forward` and :attr:`backward` shortcut attributes. The solution can be evaluated at transformed coordinates by calling the object like a function or using the :meth:`eval` method (both are equivalent).
     '''
     def __init__(self, N, degree, intervals, continuous):
         self.N = N
@@ -414,7 +417,10 @@ class BVPSolution():
             K = 1
 
         x_scale = self.forward.derivative(x)
-        start = np.sum([c.dimension for c in self.components[:delay_index]])
+        if delay_index > 0:
+            start = np.sum([c.dimension for c in self.components[:delay_index]])
+        else:
+            start = 0
         end = start + self.components[delay_index].dimension
         sigma_x = self.components[delay_index](x)
         sigma_t = self.backward(sigma_x)
