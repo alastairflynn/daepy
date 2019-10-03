@@ -2,6 +2,7 @@ import numpy as np
 from scipy.sparse import bmat, csc_matrix, csr_matrix, diags
 from .collocation import CollocationSolution
 from .nonlinear import fsolve
+from .continuation import BVPContinuation
 
 class BVP():
     '''
@@ -15,7 +16,7 @@ class BVP():
 
         self.collocation_points = self.bvpsol.collocation_points
         self.K = self.collocation_points.shape[0]
-        self.dimension = self.bvpsol.dimension
+        self.dimension = self.bvpsol.dimension + 1
 
     def solve(self, method='nleqres', tol=1e-8, maxiter=100, disp=False):
         '''
@@ -33,6 +34,27 @@ class BVP():
         '''
         c,m = fsolve(self.eval, self.state(), self.jac, method, tol, maxiter, disp)
         self.bvpsol.update_coeffs(c)
+        return self.bvpsol
+
+    def continuation_run(self, param, method='pseudo_arclength', steps=1, stepsize=1.0, target=None, tol=1e-8, maxiter=100, disp=False, callback=None):
+        '''
+        Perform a continuation run starting from parameter value *param* where method is one of
+
+        * `'pseudo_arclength'` the pseudo-arclength method [3]_ (the default)
+        * `'naive'` naive continuation with no predictive step
+
+        *steps* is either a maximum number of steps or a numpy array of parameter values which determine the steps explicitly, *stepsize* is the initial stepsize (the pseudo-arclength method will adapt the stepsize, ignored if steps are given explicitly), *target* is a value for the parameter at which the continuation will stop (optional), *tol* is the required solution tolerance, *maxiter* is the maximum number of iterations for the nonlinear solver, *disp* determines whether to print progress messages and *callback(parameter, solution)* is a function that will be called before each continuation step, for example to draw a new line on a plot at each step (optional).
+
+        Returns the final solution as a :class:`BVPSolution`.
+
+        .. note::
+            The *bvp* must have been initialised with a *dae* object that defines the :meth:`.update_parameter` method and all the jacobian methods. In the future, continuation using a finite difference approximation of the jacobian may be supported although it would still be strongly recommended to use an analytic jacobian, if available.
+
+        .. [3] E. Allgower and K. Georg. *Introduction to Numerical Continuation Methods*. Classics in Applied Mathematics. Society for Industrial and Applied Mathematics, January 2003.
+        '''
+        cont = BVPContinuation(self, method)
+        coeffs, param = cont.continuation_run(self.state(), param, steps, stepsize, target, tol, maxiter, disp, callback)
+        self.bvpsol.update_coeffs(coeffs)
         return self.bvpsol
 
     def monitor(self, x):
@@ -84,6 +106,16 @@ class BVP():
         J = bmat([[jac, transform_jac, None], [t_jac, t_transform_jac, t_scale_jac[:,None]], [cc_jac, None, None], [None, cc_transform_jac, None], [bv_jac, bv_transform_jac, None]], format='csc')
 
         J.eliminate_zeros()
+
+        return J
+
+    def parameter_jacobian(self, x, y):
+        J = np.zeros(self.dimension)
+        jac, bv_jac = self.dae.parameter_jacobian(x, y)
+        jac = jac.reshape(-1)
+
+        J[:jac.shape[0]] = jac
+        J[-bv_jac.shape[0]:] = bv_jac
 
         return J
 

@@ -1,4 +1,4 @@
-DAEpy.derivatives
+daepy.derivatives
 =================
 
 .. automodule:: daepy.derivatives

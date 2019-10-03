@@ -1,4 +1,4 @@
-DAEpy.dae
+daepy.dae
 =========
 
 .. automodule:: daepy.dae

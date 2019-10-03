@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to DAEpy's documentation!
+Introduction
 =================================
 
 Reference
@@ -12,8 +12,8 @@ Reference
 .. toctree::
    :maxdepth: 2
 
-   dae
    bvp
+   dae
    collocation
    continuation
    nonlinear

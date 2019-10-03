@@ -1,4 +1,4 @@
-DAEpy.collocation
+daepy.collocation
 =================
 
 .. automodule:: daepy.collocation

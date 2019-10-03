@@ -1,4 +1,4 @@
-DAEpy.continuation
+daepy.continuation
 ==================
 
 .. automodule:: daepy.continuation

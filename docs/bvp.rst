@@ -1,4 +1,4 @@
-DAEpy.bvp
+daepy.bvp
 =========
 
 .. automodule:: daepy.bvp

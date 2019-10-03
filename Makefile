@@ -16,6 +16,7 @@ docs:
 .PHONY: test
 test:
 	cd ./test && python test_basic_usage.py
+	cd ./test && python test_continuation.py
 
 .PHONY: clean
 clean:

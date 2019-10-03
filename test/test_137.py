@@ -14,6 +14,7 @@ class DAE():
         except:
             K = 1
             x = np.array([x])
+
         yx = y.solution(x)
         y_prime = y.scaled_derivative(x)
         sigma = y.scaled_delay(x, 1)
@@ -51,6 +52,25 @@ class DAE():
         bv_transform_jac += T1
 
         return bv_jac, bv_transform_jac
+
+    def update_parameter(self, a):
+        self.alpha = a
+
+    def parameter_jacobian(self, x, y):
+        try:
+            K = x.shape[0]
+        except:
+            K = 1
+            x = np.array([x])
+
+        s = y.transformed_coordinate(x)
+
+        jac = np.zeros((self.N,K))
+        jac[0] = s**(2+self.alpha) + (3+self.alpha)*s**(2+self.alpha) * np.log(s) - s**((3+self.alpha)**2) * np.log(s)
+
+        bv_jac = np.zeros(3)
+
+        return jac, bv_jac
 
     def standard_jac(self, x, y):
         J = np.zeros((self.N, self.N))

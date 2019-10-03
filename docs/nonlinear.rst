@@ -1,4 +1,4 @@
-DAEpy.nonlinear
+daepy.nonlinear
 ===============
 
 .. automodule:: daepy.nonlinear
