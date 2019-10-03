@@ -50,7 +50,8 @@ dark_blue = '#2854b6'
 html_theme = 'classic'
 html_theme_options = {'linkcolor':light_blue, 'visitedlinkcolor':light_blue, 'sidebarlinkcolor':light_blue, 'relbarlinkcolor':'#ffffff',
 'bgcolor':'#ffffff', 'footerbgcolor':light_blue, 'headbgcolor':'#ffffff', 'sidebarbgcolor':'#ffffff', 'relbarbgcolor':light_blue,
-'textcolor':'#121212', 'footertextcolor':'#ffffff', 'headtextcolor':dark_blue, 'sidebartextcolor':dark_blue, 'relbartextcolor':'#ffffff'}
+'textcolor':'#121212', 'footertextcolor':'#ffffff', 'headtextcolor':dark_blue, 'sidebartextcolor':dark_blue, 'relbartextcolor':'#ffffff',
+'stickysidebar':True}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
