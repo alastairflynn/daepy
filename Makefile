@@ -15,11 +15,7 @@ docs:
 
 .PHONY: test
 test:
-	cd ./test && python test_basic.py
-
-.PHONY: logo
-logo:
-	cd ./test && python test_logo.py
+	cd ./test && python test_basic_usage.py
 
 .PHONY: clean
 clean:

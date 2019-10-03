@@ -103,7 +103,9 @@ class BVPContinuation():
         y = np.concatenate([x, np.array([p0])])
         residual = self.bvp.eval(x)
         if disp:
-            print('00', y[-1], norm(residual, ord=2), m)
+            print('{:<5} {:<15} {:<15} {:<15} {<:}'.format('Step', 'Parameter', 'Residual', 'Iterations', 'Stepsize'))
+            print('{:<5d} {:<15e} {:<15e} {:<15d}'.format(0, y[-1], norm(residual, ord=2), m))
+            # print('00', y[-1], norm(residual, ord=2), m)
 
         if callback is not None:
             callback(self.bvp)
@@ -123,7 +125,8 @@ class BVPContinuation():
             self.bvp.update_parameter(y[-1])
             res = norm(self.bvp.eval(y[:-1]))
             if disp:
-                print('%02d'%step, y[-1], res, m, a)
+                # print('%02d'%step, y[-1], res, m, a)
+                print('{:<5d} {:<15e} {:<15e} {:<15d} {:<e}'.format(0, y[-1], norm(residual, ord=2), m, a))
             # stepsize *= np.sign(a*stepsize)
             # stepsize = a
 

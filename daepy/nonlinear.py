@@ -14,7 +14,7 @@ def fsolve(fun, x0, jac=None, method='nleqres', tol=1e-8, maxiter=100, disp=Fals
     * `'lm'` the Leveberg--Marquardt method [2]_
     * `'partial_inverse'` Newton-like method which calculates a partial inverse of the Jacobian by calculating a QR decomposition and doing a partial backwards substitution when the step doesn’t converge
     * `'steepest_descent'` steepest descent method
-    
+
     *tol* is required residual tolerance, *maxiter* is the maximum number of iterations and *disp* controls whether convergence messages are printed. If *jac* is `None` then a finite difference approximation of the jacobian is used.
 
     .. [1] P. Deuflhard. Systems of Equations: Global Newton Methods. In *Newton Methods for Nonlinear Problems*, Springer Series in Computational Mathematics, pages 109–172. Springer, Berlin, Heidelberg, 2011.
@@ -28,7 +28,9 @@ def fsolve(fun, x0, jac=None, method='nleqres', tol=1e-8, maxiter=100, disp=Fals
     res = fun(x)
     cost = norm(res, ord=2)
     if disp:
-        print('Initial cost:', cost)
+        print('{:<5} {:<15} {:<}'.format('Iter', 'Residual', 'Stepsize'))
+        print('{:<5d} {:<15e}'.format(0, cost))
+        # print('Initial cost:', cost)
 
     m = 0
     if method=='lm':
@@ -57,7 +59,8 @@ def fsolve(fun, x0, jac=None, method='nleqres', tol=1e-8, maxiter=100, disp=Fals
 
         m += inner_iterations
         if disp:
-            print(m, cost, l)
+            # print(m, cost, l)
+            print('{:<5d} {:<15e} {:<f}'.format(m, cost, l))
 
         if method=='lm':
             l /= 4
@@ -74,7 +77,7 @@ def fsolve(fun, x0, jac=None, method='nleqres', tol=1e-8, maxiter=100, disp=Fals
         cost = norm(fun(x), ord=2)
 
     if disp:
-        print(m, 'Final cost:', cost)
+        print('Final cost:', cost)
 
     if jac is None:
         pool.close()

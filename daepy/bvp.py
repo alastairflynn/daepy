@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import bmat, csc_matrix, csr_matrix
+from scipy.sparse import bmat, csc_matrix, csr_matrix, diags
 from .collocation import CollocationSolution
 from .nonlinear import fsolve
 
@@ -9,13 +9,12 @@ class BVP():
     '''
     def __init__(self, dae, degree=3, intervals=10):
         self.dae = dae
-        continuous = numpy.array([False for n in range(dae.N)])
+        continuous = np.array([False for n in range(dae.N)])
         continuous[dae.dindex] = True
-        self.bvpsol = BVPSolution(degree, intervals, continuous)
+        self.bvpsol = BVPSolution(dae.N, degree, intervals, continuous)
 
         self.collocation_points = self.bvpsol.collocation_points
         self.K = self.collocation_points.shape[0]
-        self.breakpoints = np.copy(self.bvpsol.breakpoints)
         self.dimension = self.bvpsol.dimension
 
     def solve(self, method='nleqres', tol=1e-8, maxiter=100, disp=False):
@@ -34,7 +33,7 @@ class BVP():
         '''
         c,m = fsolve(self.eval, self.state(), self.jac, method, tol, maxiter, disp)
         self.bvpsol.update_coeffs(c)
-        return m
+        return self.bvpsol
 
     def monitor(self, x):
         '''
@@ -47,7 +46,7 @@ class BVP():
         '''
         Returns an array containing the current coefficients of the collocation solution, coordinate transform and the coordinate scaling.
         '''
-        return self.solution.state()
+        return self.bvpsol.state()
 
     def eval(self, coeffs):
         '''
@@ -233,15 +232,22 @@ class BVPSolution():
     '''
     Solution to a BVP. This class collects the collocation solution, coordinate transform and coordinate scaling together.
     '''
-    def __init__(self, degree, intervals, continuous):
+    def __init__(self, N, degree, intervals, continuous):
+        self.N = N
         self.degree = degree
         self.intervals = intervals
         self.continuous = continuous
-        self.solution = CollocationSolution(N, degree, np.linspace(0,1,intervals+1), continuous)
+        self.solution = CollocationSolution(self.N, degree, np.linspace(0,1,intervals+1), continuous)
         self.scale = 1.0
         self.transform = CollocationSolution(2, degree, np.linspace(0,1,intervals+1), continuous=[True, False])
         self.collocation_points = self.solution.collocation_points
         self.dimension = self.solution.dimension + self.transform.dimension
+        self.components = self.solution.components
+        self.forward = self.transform.components[0]
+        self.backward = self.transform.components[1]
+
+    def __call__(self, s):
+        return self.eval(s)
 
     def state(self):
         '''
@@ -257,23 +263,166 @@ class BVPSolution():
         self.transform.update_coeffs(coeffs[-1-self.transform.dimension:-1])
         self.scale = coeffs[-1]
 
+    def eval(self, s):
+        '''
+        Evaluate the collocation solution at transformed points *s*. Equivalently, one can call the object like a function.
+        '''
+        a = self.forward(0)
+        b = self.forward(1)
+        s -= a
+        s /= b-a
+        return self.solution(self.backward(s))
+
+    def transformed_coordinate(self, t):
+        '''
+        Returns the coordinate transform evaluated at *t*
+        '''
+        return self.forward(t)
+
     def scaled_derivative(self, x):
         '''
         Returns the derivative of the collocation solution, scaled by the coordinate transform.
         '''
-        return self.solution.derivative(x) / transform.components[0].derivative(x)
+        return self.solution.derivative(x) / self.forward.derivative(x)
+
+    def scaled_delay(self, x, delay_index):
+        '''
+        Returns the value in [0,1] that corresponds to the delayed value. The delay must be one of the variables of the system with index *delay_index*.
+        '''
+        return self.backward(self.components[delay_index](x))
+
+    def derivative_wrt_current(self, x, jac=None, nonautonomous_jac=None, sparse=True):
+        '''
+        Calculate the derivative of the nonlinear system with respect to non-delayed arguments where *jac(x,y)* is a function that returns the jacobian of the system with respect to non-delayed arguments at a point *x*. If the system is non-autonomous then a function *nonautonomous_jac(x,y)* which returns the jacobian of the non-autonmous part with respect to the coordinate transform may be provided and this method will return the corresponding derivative of the nonlinear system. If either *jac* or *nonautonomous_jac* is not provided then the corresponding derivative is zero. The results are returned as :class:`scipy.sparse.csr_matrix` unless *sparse* is `False`, in which case the result is returned as a full numpy array.
+        '''
+        try:
+            K = x.shape[0]
+        except AttributeError:
+            x = np.array([x])
+            K = 1
+
+        if jac is None:
+            J = 0
+        else:
+            try:
+                dim = jac(x[0], self).shape[0]
+            except AttributeError:
+                dim = 1
+            Jj = np.zeros((dim*K,self.N*K))
+            for k in range(K):
+                Jj[k:dim*K:K, k:self.N*K:K] = jac(x[k], self)
+            M = csc_matrix(self.solution.eval_matrix(x))
+            J = csr_matrix(Jj).dot(M)
+
+        if nonautonomous_jac is None:
+            T = 0
+        else:
+            try:
+                dim = nonautonomous_jac(x[0], self).shape[0]
+            except AttributeError:
+                dim = 1
+            Jj = np.zeros((dim*K,2*K))
+            for k in range(K):
+                Jj[k:dim*K:K, k] = nonautonomous_jac(x[k], self)
+            M = csc_matrix(self.transform.eval_matrix(x))
+            T = csr_matrix(Jj).dot(M)
+
+        if not sparse:
+            if jac is not None:
+                J = J.toarray()
+            if nonautonomous_jac is not None:
+                T = T.toarray()
+
+        return J, T
+
+    def derivative_wrt_derivative(self, x, jac, sparse=True):
+        '''
+        Calculate the derivative of the nonlinear system with respect to non-delayed derivatives where *jac(x,y)* is a function that returns the jacobian of the system with respect to non-delayed derivatives at a point *x*. Also calculates the corresponding derivative with respect to the coordinate transform. The results are returned as :class:`scipy.sparse.csr_matrix` unless *sparse* is `False`, in which case the result is returned as a full numpy array.
+        '''
+        try:
+            K = x.shape[0]
+        except AttributeError:
+            x = np.array([x])
+            K = 1
+
+        x_scale = self.forward.derivative(x)
+        y_prime = self.solution.derivative(x)
+
+        try:
+            dim = jac(x[0], self).shape[0]
+        except AttributeError:
+            dim = 1
+        Jj = np.zeros((dim*K,self.N*K))
+        for k in range(K):
+            Jj[k:dim*K:K, k:self.N*K:K] = jac(x[k], self) / x_scale[k]
+        M = csc_matrix(self.solution.derivative_matrix(x))
+        J = csr_matrix(Jj).dot(M)
+
+        Jj = np.zeros((dim*K,2*K))
+        for k in range(K):
+            scaling = -y_prime[:,k] / x_scale[k]**2
+            Jj[k:dim*K:K, k] = np.sum(jac(x[k], self) * scaling[None,:], axis=1)
+        M = csc_matrix(self.transform.derivative_matrix(x))
+        T = csr_matrix(Jj).dot(M)
+
+        if not sparse:
+            J = J.toarray()
+            T = T.toarray()
+
+        return J, T
+
+    def derivative_wrt_delayed(self, x, jac, delay_index, sparse=True):
+        '''
+        Calculate the derivative of the nonlinear system with respect to delayed arguments where *jac(x,y)* is a function that returns the jacobian of the system with respect to delayed arguments at a point *x*. The delay must be one of the variables of the system with index *delay_index*. Also calculates the corresponding derivative with respect to the coordinate transform. The results are returned as :class:`scipy.sparse.csr_matrix` unless *sparse* is `False`, in which case the result is returned as a full numpy array. If your system has multiple delays, this function must be used for each delay separately.
+        '''
+        try:
+            K = x.shape[0]
+        except AttributeError:
+            x = np.array([x])
+            K = 1
+
+        x_scale = self.forward.derivative(x)
+        start = np.sum([c.dimension for c in self.components[:delay_index]])
+        end = start + self.components[delay_index].dimension
+        sigma_x = self.components[delay_index](x)
+        sigma_t = self.backward(sigma_x)
+
+        try:
+            dim = jac(x[0], self).shape[0]
+        except AttributeError:
+            dim = 1
+        Jj = np.zeros((dim*K,self.N*K))
+        for k in range(K):
+            Jj[k:dim*K:K, k:self.N*K:K] = jac(x[k], self)
+        derivative_wrt_sigma = np.concatenate([np.diag(self.components[n].derivative(sigma_t)) for n in range(self.N)], axis=0)
+        sigma_prime = np.zeros((self.collocation_points.shape[0], self.solution.dimension))
+        sigma_prime[:,start:end] = diags((self.backward.derivative(sigma_x)), format='csr').dot(self.components[delay_index].eval_matrix(x))
+        M = csr_matrix(derivative_wrt_sigma).dot(csc_matrix(sigma_prime))
+        M = csc_matrix(M) + csc_matrix(self.solution.eval_matrix(sigma_t))
+        J = csr_matrix(Jj).dot(M)
+
+        sigma_prime = np.zeros((K, self.transform.dimension))
+        sigma_prime[:,self.forward.dimension:] = self.backward.eval_matrix(sigma_x)
+        M = csr_matrix(derivative_wrt_sigma).dot(csc_matrix(sigma_prime))
+        T = csr_matrix(Jj).dot(M)
+
+        if not sparse:
+            J = J.toarray()
+            T = T.toarray()
+
+        return J, T
 
     def save(self, savename):
         '''
         Save the solution in compressed format. The file extension `.npz` is appended automatically. The solution can be loaded again using :func:`load_solution`.
         '''
-        np.savez_compressed(savename, degree=self.degree, intervals=self.intervals, continuous=self.continuous, state=self.state())
+        np.savez_compressed(savename, N=self.N, degree=self.degree, intervals=self.intervals, continuous=self.continuous, state=self.state())
 
 def load_solution(filename):
     '''
     Load a solution from compressed format.
     '''
     data = np.load(filename)
-    bvpsol = BVPSolution(data['degree'], data['intervals'], data['continuous'])
+    bvpsol = BVPSolution(data['N'], data['degree'], data['intervals'], data['continuous'])
     bvpsol.update_coeffs(data['state'])
     return bvpsol
