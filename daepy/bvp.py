@@ -29,6 +29,8 @@ class BVP():
 
         *tol* is required residual tolerance, *maxiter* is the maximum number of iterations and *disp* controls whether convergence messages are printed.
 
+        Returns the final solution as a :class:`BVPSolution`.
+
         .. [1] P. Deuflhard. Systems of Equations: Global Newton Methods. In *Newton Methods for Nonlinear Problems*, Springer Series in Computational Mathematics, pages 109–172. Springer, Berlin, Heidelberg, 2011.
         .. [2] J. Dennis and R. Schnabel. *Numerical Methods for Unconstrained Optimization and Nonlinear Equations*. Classics in Applied Mathematics. Society for Industrial and Applied Mathematics, January 1996.
         '''

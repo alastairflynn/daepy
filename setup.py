@@ -8,10 +8,10 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name="daepy-alastairflynn",
+    name="daepy",
     version="0.0.0",
     author="Alastair Flynn",
-    author_email="alastair.flynn@epfl.ch",
+    author_email="contact@alastairflynn.com",
     description="A collocation solver for boundary value problems of differential algebraic equations with forward and backward deviations",
     long_description=long_description,
     long_description_content_type="text/markdown",

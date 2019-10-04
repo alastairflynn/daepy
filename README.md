@@ -1,6 +1,6 @@
 # DAEpy
 
-DAEpy is a Python library for solving boundary value problems of differential algebraic equations with advanced and retarded (forward and backward) deviations. It also contains routines for parameter continuation. The numerical method is based on collocation. This library was developed in the [Laboratory for Computation and Visualization in Mathematics and Mechanics](https://lcvmwww.epfl.ch/) at [EPFL](https://epfl.ch).
+DAEpy is a Python library for solving boundary value problems of differential algebraic equations with advanced and retarded (forward and backward) delays. It also contains routines for parameter continuation. The numerical method is based on collocation. This library was developed in the [Laboratory for Computation and Visualization in Mathematics and Mechanics](https://lcvmwww.epfl.ch/) at [EPFL](https://epfl.ch).
 
 ## Installation
 

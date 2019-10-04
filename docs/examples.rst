@@ -29,7 +29,7 @@ Copy the :ref:`problem definition <example_problem_definition>` and save it as :
   alpha = 5
   dae = DAE(alpha)
 
-Next we create a :class:`BVP` class and give it an initial guess for the solution, in this case :math:`y(t) = 0`. ::
+Next we create a :class:`.BVP` class and give it an initial guess for the solution, in this case :math:`y(t) = 0`. ::
 
   degree = 3
   intervals = 10
