@@ -12,7 +12,7 @@ setup(
     version="0.0.0",
     author="Alastair Flynn",
     author_email="contact@alastairflynn.com",
-    description="A collocation solver for boundary value problems of differential algebraic equations with forward and backward deviations",
+    description="A Python library for solving boundary value problems of differential algebraic equations with advanced and retarded (forward and backward) delays",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://lcvmwww.epfl.ch/software/daepy",
