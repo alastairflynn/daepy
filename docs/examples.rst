@@ -96,7 +96,7 @@ In this example we gave the continuation steps explicitly as a list but it is al
   plt.title('Parameter continuation example')
   plt.show()
 
-  This should produce a plot like this.
+This should produce a plot like this.
 
 .. image:: continuation.jpg
   :width: 50%
