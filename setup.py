@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name="daepy",
+    name="daepy-alastairflynn",
     version="0.0.0",
     author="Alastair Flynn",
     author_email="alastair.flynn@epfl.ch",
