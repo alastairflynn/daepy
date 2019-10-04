@@ -87,7 +87,7 @@ Once a problem definition has been written, the :class:`.BVP` class is used to c
   from mydae import MyDAE
 
   parameter = 2.0
-  dae = MyDae(parameter)
+  dae = MyDAE(parameter)
 
   bvp = BVP(dae, degree=3, intervals=10)
   bvp.initial_guess([lambda x: 0, lambda x: 0], initial_interval=[0,1])
@@ -99,7 +99,7 @@ The solution is a :class:`.BVPSolution` object. A continuation run can be perfor
 Examples
 ========
 
-There is a :ref:`basic usage example <basic_example>` and a :ref:`parameter continuation <continuation_example>` example.
+On the :ref:`examples <examples>` page there is a :ref:`basic usage example <basic_example>` and a :ref:`parameter continuation <continuation_example>` example.
 
 Reference
 =========
