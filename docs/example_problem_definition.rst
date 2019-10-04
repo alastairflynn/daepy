@@ -27,7 +27,7 @@ where :math:`t \in [0,1]` and :math:`y(0) = 0`. ::
 
           r = np.zeros((self.N,x.shape[0]))
 
-          r[0] = y.components[0].eval(sigma) + (3+self.alpha)*s**(2+self.alpha) - s**((3+self.alpha)**2) - y_prime[0]
+          r[0] = y[0](sigma) + (3+self.alpha)*s**(2+self.alpha) - s**((3+self.alpha)**2) - y_prime[0]
 
           return r
 

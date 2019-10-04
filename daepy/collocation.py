@@ -8,7 +8,7 @@ class CollocationSolution():
     '''
     Multivariate piecewise polynomial where *N* is the number of components, *degree* is the degree of the continuous components, *breakpoints* are the ends of the subintervals and *continuous* is an (N,) numpy array of booleans determining which components are continuous. If *continuous* is `True` or `False` then all components are set to be continuous or not respectively.
 
-    Each component is a :class:`UnivariateCollocationSolution`. These can be accessed via the :attr:`components` attribute which is a list of the :class:`UnivariateCollocationSolution` components.
+    Each component is a :class:`UnivariateCollocationSolution`. These can be accessed by indexing the object or via the :attr:`components` attribute which is a list of the :class:`UnivariateCollocationSolution` components.
 
     .. note::
         Labelling a component as continuous does not guarantee that it will be continuous, it only means that it will be represented by poynomials one degree higher than components labelled as not continuous.
@@ -26,16 +26,19 @@ class CollocationSolution():
         self.intervals = len(self.breakpoints) - 1
         self.collocation_points = np.concatenate([(self.points + 1) / 2 * (self.breakpoints[i+1] - self.breakpoints[i]) + self.breakpoints[i] for i in range(self.intervals)])
         self.components = [UnivariateCollocationSolution(self.degree, self.breakpoints, self.continuous[n]) for n in range(self.N)]
-        self.dimension = sum([self.components[n].dimension for n in range(self.N)])
+        self.dimension = sum([self[n].dimension for n in range(self.N)])
 
     def __call__(self, x):
         return self.eval(x)
+
+    def __getitem__(self, n):
+        return self.components[n]
 
     def get_coeffs(self):
         '''
         Returns the polynomial coefficients.
         '''
-        return np.concatenate([self.components[n].coeffs for n in range(self.N)])
+        return np.concatenate([self[n].coeffs for n in range(self.N)])
 
     def update_coeffs(self, vals):
         '''
@@ -43,8 +46,8 @@ class CollocationSolution():
         '''
         start = 0
         for n in range(self.N):
-            self.components[n].update_coeffs(vals[start:start+self.components[n].dimension])
-            start += self.components[n].dimension
+            self[n].update_coeffs(vals[start:start+self[n].dimension])
+            start += self[n].dimension
 
     def fit(self, x, data, degree=None):
         '''
@@ -53,50 +56,50 @@ class CollocationSolution():
         if degree is None:
             degree = self.degree
         for n in range(self.N):
-            self.components[n].fit(x, data[n], degree=degree)
+            self[n].fit(x, data[n], degree=degree)
 
     def interpolate(self, fun_list):
         '''
         Interpolate a list of functions.
         '''
         for n in range(self.N):
-            self.components[n].interpolate(fun_list[n])
+            self[n].interpolate(fun_list[n])
 
     def fitting_matrix(self):
         '''
         Return the matrix :math:`F` such that :math:`c = Fd` are the polynomial coefficients where :math:`d` is fitting data.
         '''
-        return block_diag(*(self.components[n].fitting_matrix() for n in range(self.N)))
+        return block_diag(*(self[n].fitting_matrix() for n in range(self.N)))
 
     def eval(self, x):
         '''
         Evaluate the piecewise polynomials. This can also be achieved by simply calling the object like a function, that is :code:`sol(x)` is equivalent to :code:`sol.eval(x)`.
         '''
-        return np.array([self.components[n].eval(x) for n in range(self.N)])
+        return np.array([self[n].eval(x) for n in range(self.N)])
 
     def eval_matrix(self, x):
         '''
         Return the matrix :math:`E` such that :math:`Ec = y(x)` where :math:`c` are the polynomial coefficients and :math:`y(x)` is the piecewise polynomial evaluated at points *x*.
         '''
-        return block_diag(*(self.components[n].eval_matrix(x) for n in range(self.N)))
+        return block_diag(*(self[n].eval_matrix(x) for n in range(self.N)))
 
     def derivative(self, x):
         '''
         Calculate the derivative at points *x*.
         '''
-        return np.array([self.components[n].derivative(x) for n in range(self.N)])
+        return np.array([self[n].derivative(x) for n in range(self.N)])
 
     def derivative_matrix(self, x=None):
         '''
         Return the matrix :math:`D` such that :math:`Dc = y'(x)` where :math:`c` are the polynomial coefficients and :math:`y'(x)` is the derivative of the piecewise polynomial evaluated at points *x*. If *x* is not given then it is taken to be the collocation points and the matrix is constructed using a faster routine than for general *x*.
         '''
-        return block_diag(*(self.components[n].derivative_matrix(x) for n in range(self.N)))
+        return block_diag(*(self[n].derivative_matrix(x) for n in range(self.N)))
 
     def continuity_error(self):
         '''
         Return the continuity error for continuous variables.
         '''
-        return np.concatenate([self.components[n].continuity_error() for n in range(self.N)])
+        return np.concatenate([self[n].continuity_error() for n in range(self.N)])
 
     def continuity_jacobian(self):
         '''
@@ -107,22 +110,22 @@ class CollocationSolution():
         col = 0
         for n in range(self.N):
             if self.continuous[n]:
-                cc_jac[row:row+self.intervals-1,col:col+self.components[n].dimension] = self.components[n].continuity_jacobian()
+                cc_jac[row:row+self.intervals-1,col:col+self[n].dimension] = self[n].continuity_jacobian()
                 row += self.intervals-1
-            col += self.components[n].dimension
+            col += self[n].dimension
         return cc_jac
 
     def integral(self):
         '''
         Integrate the piecewise polynomial over the whole interval.
         '''
-        return np.array([self.components[n].integral() for n in range(self.N)])
+        return np.array([self[n].integral() for n in range(self.N)])
 
     def antiderivative(self, x):
         '''
         Calculate the antiderivative of the piecewise polynomial at points *x*. The antiderivative at 0 is 0.
         '''
-        return np.array([self.components[n].antiderivative(x) for n in range(self.N)])
+        return np.array([self[n].antiderivative(x) for n in range(self.N)])
 
 class UnivariateCollocationSolution():
     def __init__(self, degree, breakpoints, continuous=False):

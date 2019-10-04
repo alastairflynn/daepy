@@ -22,3 +22,5 @@ plt.plot(l, l**(3+alpha), '--')
 plt.legend(['Numerical solution', 'Analytical solution'])
 plt.title('Basic usage example')
 plt.show()
+
+sol.save('test')

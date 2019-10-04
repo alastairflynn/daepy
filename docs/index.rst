@@ -6,7 +6,7 @@
 Introduction
 =================================
 
-DAEpy is a Python library for solving boundary value problems of differential algebraic equations with advanced and retarded (forward and backward) delays. It also contains routines for parameter continuation. The :download:`numerical method <summary.pdf>` is based on collocation.
+DAEpy is a Python library for solving boundary value problems of differential algebraic equations with advanced and retarded (forward and backward) delays. It also contains routines for parameter continuation. The :download:`numerical method <summary.pdf>` is based on collocation. The `source code <https://github.com/alastairflynn/daepy>`_ is available on Github.
 
 Installation
 ============
@@ -19,7 +19,7 @@ This will install DAEpy and all its dependencies. It is recommended, but not nec
 
   pip install scikit-umfpack
 
-Usage & Examples
+Usage
 ================
 
 The user must define their system by a Python class. A template class can be imported by ::
@@ -95,6 +95,9 @@ Once a problem definition has been written, the :class:`.BVP` class is used to c
   sol = bvp.solve()
 
 The solution is a :class:`.BVPSolution` object. A continuation run can be performed using the :meth:`.continuation` method (it is not necessary to call :meth:`.solve` before :meth:`.continuation`).
+
+Examples
+========
 
 There is a :ref:`basic usage example <basic_example>` and a :ref:`parameter continuation <continuation_example>` example.
 

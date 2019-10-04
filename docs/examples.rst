@@ -81,7 +81,7 @@ Now we define a callback function which will plot the solution at each continuat
   def callback(p, sol):
       colour = (min((p-10)/40, 1.0), 0.0, max(1-(p-10)/40, 0.0))
       l = np.linspace(0,1)
-      plt.plot(l, sol(l)[0], color=colour)
+      plt.plot(sol.forward(l), sol[0](l), color=colour) # plot using internal coordinate for smoother lines
 
 Now can perform the parameter continuation. ::
 

@@ -265,7 +265,10 @@ class BVP():
 
 class BVPSolution():
     '''
-    Solution to a BVP. This class collects the collocation solution, coordinate transform and coordinate scaling together. The collocation solution (parametrised by the internal coordinate) can be accessed using the :attr:`solution` attribute and the components of the coordinate transform can be accessed using the :attr:`forward` and :attr:`backward` shortcut attributes. The solution can be evaluated at transformed coordinates by calling the object like a function or using the :meth:`eval` method (both are equivalent).
+    Solution to a BVP. This class collects the collocation solution, coordinate transform and coordinate scaling together. The collocation solution (parametrised by the internal coordinate) can be accessed using the :attr:`solution` attribute and the components of the coordinate transform can be accessed using the :attr:`forward` and :attr:`backward` shortcut attributes. Individual components of the collocation solution can be accessed by indexing this object. The solution can be evaluated at transformed coordinates by calling the object like a function or using the :meth:`eval` method (both are equivalent).
+
+    .. warning::
+        Indexing a :class:`BVPSolution` object returns components of the solution which are parametrised by the internal coordinate whereas evaluating a :class:`BVPSolution` object evaluates it at points in the transformed coordinate. Therefore :code:`sol[i](x)` is not the same as :code:`sol(x)[i]`. The first is evaluated at points *x* in the internal coordinate and the second is evaluated at points *x* in the transformed coordinate.
     '''
     def __init__(self, N, degree, intervals, continuous):
         self.N = N
@@ -277,12 +280,14 @@ class BVPSolution():
         self.transform = CollocationSolution(2, degree, np.linspace(0,1,intervals+1), continuous=[True, False])
         self.collocation_points = self.solution.collocation_points
         self.dimension = self.solution.dimension + self.transform.dimension
-        self.components = self.solution.components
         self.forward = self.transform.components[0]
         self.backward = self.transform.components[1]
 
     def __call__(self, s):
         return self.eval(s)
+
+    def __getitem__(self, n):
+        return self.solution.components[n]
 
     def state(self):
         '''
@@ -324,7 +329,7 @@ class BVPSolution():
         '''
         Returns the value in [0,1] that corresponds to the delayed value. The delay must be one of the variables of the system with index *delay_index*.
         '''
-        return self.backward(self.components[delay_index](x))
+        return self.backward(self[delay_index](x))
 
     def derivative_wrt_current(self, x, jac=None, nonautonomous_jac=None, sparse=True):
         '''
@@ -418,11 +423,11 @@ class BVPSolution():
 
         x_scale = self.forward.derivative(x)
         if delay_index > 0:
-            start = np.sum([c.dimension for c in self.components[:delay_index]])
+            start = np.sum([c.dimension for c in self[:delay_index]])
         else:
             start = 0
-        end = start + self.components[delay_index].dimension
-        sigma_x = self.components[delay_index](x)
+        end = start + self[delay_index].dimension
+        sigma_x = self[delay_index](x)
         sigma_t = self.backward(sigma_x)
 
         try:
@@ -432,9 +437,9 @@ class BVPSolution():
         Jj = np.zeros((dim*K,self.N*K))
         for k in range(K):
             Jj[k:dim*K:K, k:self.N*K:K] = jac(x[k], self)
-        derivative_wrt_sigma = np.concatenate([np.diag(self.components[n].derivative(sigma_t)) for n in range(self.N)], axis=0)
+        derivative_wrt_sigma = np.concatenate([np.diag(self[n].derivative(sigma_t)) for n in range(self.N)], axis=0)
         sigma_prime = np.zeros((self.collocation_points.shape[0], self.solution.dimension))
-        sigma_prime[:,start:end] = diags((self.backward.derivative(sigma_x)), format='csr').dot(self.components[delay_index].eval_matrix(x))
+        sigma_prime[:,start:end] = diags((self.backward.derivative(sigma_x)), format='csr').dot(self[delay_index].eval_matrix(x))
         M = csr_matrix(derivative_wrt_sigma).dot(csc_matrix(sigma_prime))
         M = csc_matrix(M) + csc_matrix(self.solution.eval_matrix(sigma_t))
         J = csr_matrix(Jj).dot(M)
