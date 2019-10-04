@@ -1,8 +1,8 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.extension import Extension
 from setuptools.command import build_ext
 
-cheby_ext = Extension('cheby', ['daepy/cheby.c'])
+cheby_ext = Extension('daepy.cheby.cheby', ['daepy/cheby/cheby.c'])
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -18,9 +18,8 @@ setup(
     url="https://lcvmwww.epfl.ch/software/daepy",
     project_urls={'Documentation':'https://lcvmwww.epfl.ch/software/daepy',
                   'Source code':'https://github.com/alastairflynn/daepy'},
-    packages=setuptools.find_packages(),
-    libraries=[cheby_ext],
-    cmdclass={'build_ext':build_ext},
+    packages=find_packages(),
+    ext_modules=[cheby_ext],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

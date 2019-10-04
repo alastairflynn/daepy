@@ -21,7 +21,8 @@ test:
 
 .PHONY: clean
 clean:
-	rm dist/*
+	rm -rf dist
+	rm -rf build
 
 all:
 	build
