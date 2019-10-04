@@ -53,6 +53,9 @@ html_theme_options = {'linkcolor':light_blue, 'visitedlinkcolor':light_blue, 'si
 'textcolor':'#121212', 'footertextcolor':'#ffffff', 'headtextcolor':dark_blue, 'sidebartextcolor':dark_blue, 'relbartextcolor':'#ffffff',
 'stickysidebar':True}
 
+html_logo = 'logo_small.png'
+html_favicon = 'LCVMMlogo_xs.ico'
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
