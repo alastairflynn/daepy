@@ -8,6 +8,10 @@ Introduction
 
 DAEpy is a Python library for solving boundary value problems of differential algebraic equations with advanced and retarded (forward and backward) delays. It also contains routines for parameter continuation. The :download:`numerical method <summary.pdf>` is based on collocation. The `source code <https://github.com/alastairflynn/daepy>`_ is available on Github.
 
+This library was developed at `LCVMM <https://lcvmwww.epfl.ch/>`_. If you find it useful, please cite it [:download:`BibTeX <DAEpy.bib>`]:
+
+  Alastair Flynn. DAEpy: a Python library for solving boundary value problems of differential algebraic equations with advanced and retarded (forward and backward) delays. version 0.0.0. LCVMM, EPFL. 2019. url: https://lcvmwww.epfl.ch/software/daepy/.
+
 Installation
 ============
 
@@ -84,10 +88,10 @@ All six methods must be defined for parameter continuation. You can of course de
 Once a problem definition has been written, the :class:`.BVP` class is used to construct and solve the nonlinear system ::
 
   from daepy import BVP
-  from mydae import MyDAE
+  from mydae import DAE # problem definition saved as mydae.py
 
   parameter = 2.0
-  dae = MyDAE(parameter)
+  dae = DAE(parameter)
 
   bvp = BVP(dae, degree=3, intervals=10)
   bvp.initial_guess([lambda x: 0, lambda x: 0], initial_interval=[0,1])
