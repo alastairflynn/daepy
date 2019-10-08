@@ -59,13 +59,6 @@ class BVP():
         self.bvpsol.update_coeffs(coeffs)
         return self.bvpsol
 
-    def monitor(self, x):
-        '''
-        The monitor function used to define the coordinate transform.
-        '''
-        dx = np.sum(self.bvpsol.solution.derivative(x)[self.dae.dindex]**2, axis=0)
-        return self.bvpsol.scale / np.sqrt(1 + dx)
-
     def state(self):
         '''
         Returns an array containing the current coefficients of the collocation solution, coordinate transform and the coordinate scaling.
@@ -124,6 +117,13 @@ class BVP():
 
         return J
 
+    def monitor(self, x):
+        '''
+        The monitor function used to define the coordinate transform.
+        '''
+        dx = np.sum(self.bvpsol.solution.derivative(x)[self.dae.dindex]**2, axis=0)
+        return self.bvpsol.scale / np.sqrt(1 + dx)
+
     def monitor_derivative(self, x):
         '''
         Derivative of the monitor function.
@@ -166,9 +166,15 @@ class BVP():
 
         return jac, transform_jac, scale_jac
 
+    def initial_solution(self, sol):
+        '''
+        Set the initial solution to :class:`BVPSolution` *sol*.
+        '''
+        self.bvpsol = sol
+
     def initial_guess(self, fun_list, transform=None, initial_interval=None):
         '''
-        Determine the initial polynomial coefficients from initial guesses for the variables given as a list of functions and, optionally, an initial coordinate transform and initial solution interval.
+        Determine the initial polynomial coefficients from guesses for the variables given as a list of functions and, optionally, an initial coordinate transform and initial solution interval.
         '''
         if transform is None:
             print('Calculating initial transform...')
