@@ -16,7 +16,7 @@ bvp.initial_guess([lambda x: 0], initial_interval=[0,1])
 sol = bvp.solve(method='nleqres', tol=1e-14, maxiter=100, disp=True)
 
 l = np.linspace(0,1)
-plt.plot(l, sol(l)[0])
+plt.plot(l, sol.eval(l))
 plt.plot(l, l**(3+alpha), '--')
 
 plt.legend(['Numerical solution', 'Analytical solution'])

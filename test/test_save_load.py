@@ -18,7 +18,7 @@ bvp.initial_solution(sol)
 print('Residual:', np.linalg.norm(bvp.eval(bvp.state())))
 
 l = np.linspace(0,1)
-plt.plot(l, sol(l)[0])
+plt.plot(l, sol.eval(l))
 plt.plot(l, l**(3+alpha), '--')
 
 plt.legend(['Numerical solution', 'Analytical solution'])

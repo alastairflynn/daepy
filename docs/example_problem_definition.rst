@@ -20,7 +20,7 @@ where :math:`t \in [0,1]` and :math:`y(0) = 0`. ::
           self.alpha = alpha
 
       def fun(self, x, y):
-          yx = y.solution(x)
+          yx = y(x)
           y_prime = y.scaled_derivative(x)
           sigma = y.scaled_delay(x, 0)
           s = y.transformed_coordinate(x)
@@ -98,5 +98,6 @@ where :math:`t \in [0,1]` and :math:`y(0) = 0`. ::
           r = np.zeros(3)
           r[2] = 1.0
           return r
+
 
 .. [1] L. Tavernini, *The Approximate Solution of Volterra Diff. Systems with State-Dependent Time Lags*, SIAM J. Num. Anal. Vol. 15 (1978). 1039-1052

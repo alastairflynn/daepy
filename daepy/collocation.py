@@ -75,7 +75,10 @@ class CollocationSolution():
         '''
         Evaluate the piecewise polynomials. This can also be achieved by simply calling the object like a function, that is :code:`sol(x)` is equivalent to :code:`sol.eval(x)`.
         '''
-        return np.array([self[n].eval(x) for n in range(self.N)])
+        result = np.array([self[n].eval(x) for n in range(self.N)])
+        if self.N == 1:
+            result = np.reshape(result, -1)
+        return result
 
     def eval_matrix(self, x):
         '''

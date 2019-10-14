@@ -8,7 +8,7 @@ class DAE():
         self.alpha = alpha
 
     def fun(self, x, y):
-        yx = y.solution(x)
+        yx = y(x)
         y_prime = y.scaled_derivative(x)
         sigma = y.scaled_delay(x, 0)
         s = y.transformed_coordinate(x)

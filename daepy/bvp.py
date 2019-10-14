@@ -1,8 +1,13 @@
 import numpy as np
 from scipy.sparse import bmat, csc_matrix, csr_matrix, diags
+import dill
+from multiprocessing import Pool
+from matplotlib import pyplot as plt
+from mpl_toolkits.axes_grid1 import ImageGrid
 from .collocation import CollocationSolution
 from .nonlinear import fsolve
 from .continuation import BVPContinuation
+from .derivatives import approx_jac
 
 class BVP():
     '''
@@ -117,6 +122,51 @@ class BVP():
 
         return J
 
+    def check_jacobian(self):
+        '''
+        Draws a plot to show the error between the analytic jacobian and a finite difference jacobian. Can be useful for checking jacobians.
+        '''
+        analytic = self.jac(self.state())
+        stream = dill.dumps(self.eval)
+        with Pool() as pool:
+            finite_differences = approx_jac(stream, self.state(), 1e-8, pool)
+
+        residual = self.dae.fun(self.collocation_points, self.bvpsol).reshape(-1)
+        bv_res = self.dae.bv(self.bvpsol).reshape(-1)
+        tres0 = self.monitor(self.collocation_points) - self.bvpsol.transform.components[0].derivative(self.collocation_points)
+        tres1 = self.bvpsol.transform.components[0](self.bvpsol.transform.components[1](self.collocation_points)) / self.bvpsol.transform.components[0](1) - self.collocation_points
+        cc = self.bvpsol.solution.continuity_error()
+        cc_transform = self.bvpsol.transform.continuity_error()
+
+        lines = [residual.shape[0]-0.5, tres0.shape[0] + tres1.shape[0] + residual.shape[0]-0.5, cc.shape[0] + cc_transform.shape[0] + tres0.shape[0] + tres1.shape[0] + residual.shape[0]-0.5]
+
+        error = analytic.toarray() - finite_differences
+        print('Maximum jacobian error:', np.max(np.abs(error)))
+
+        fig = plt.figure(figsize=(8,3))
+        grid = ImageGrid(fig, 111, nrows_ncols=(1,3), axes_pad=0.5, share_all=True, cbar_location="right", cbar_mode="single", cbar_pad=0.1)
+
+        grid[0].set_title('Analytic jacobian')
+        grid[0].imshow(analytic.toarray())
+        grid[0].hlines(lines, 0, analytic.shape[1]-1, linestyles='--')
+        grid[0].vlines(self.bvpsol.solution.dimension-0.5, 0, analytic.shape[0]-1, linestyles='--')
+
+        grid[1].set_title('Finite difference jacobian')
+        grid[1].imshow(finite_differences)
+        grid[1].hlines(lines, 0, analytic.shape[1]-1, linestyles='--')
+        grid[1].vlines(self.bvpsol.solution.dimension-0.5, 0, analytic.shape[0]-1, linestyles='--')
+
+        grid[2].set_title('Error')
+        c = grid[2].imshow(error)
+        grid[2].hlines(lines, 0, analytic.shape[1]-1, linestyles='--')
+        grid[2].vlines(self.bvpsol.solution.dimension-0.5, 0, analytic.shape[0]-1, linestyles='--')
+
+        grid[2].cax.colorbar(c)
+        grid[2].cax.toggle_label(True)
+
+        # plt.tight_layout()
+        plt.show()
+
     def monitor(self, x):
         '''
         The monitor function used to define the coordinate transform.
@@ -210,7 +260,7 @@ class BVP():
         '''
         self.bvpsol.transform.update_coeffs(transform_coeffs[:-1])
         self.bvpsol.scale = transform_coeffs[-1]
-        y_prime = self.solution.derivative(self.collocation_points)
+        y_prime = self.bvpsol.solution.derivative(self.collocation_points)
         derivative = lambda f, x: (f(x+1e-8) - f(x)) / 1e-8
         for n in range(self.dae.N):
             self.bvpsol.solution.components[n].interpolate(lambda t: fun_list[n](self.bvpsol.transform.components[0](t) / self.bvpsol.transform.components[0](1)))
@@ -269,14 +319,13 @@ class BVP():
 
         bv_jac = np.matmul(J0, B0) + np.matmul(J1, B1)
 
-        return bmat([[J, scale_jac[:,None]], [self.transform.continuity_jacobian(), None], [bv_jac, None]], format='csc')
+        return bmat([[J, scale_jac[:,None]], [self.bvpsol.transform.continuity_jacobian(), None], [bv_jac, None]], format='csc')
 
 class BVPSolution():
     '''
-    Solution to a BVP. This class collects the collocation solution, coordinate transform and coordinate scaling together. The collocation solution (parametrised by the internal coordinate) can be accessed using the :attr:`solution` attribute and the components of the coordinate transform can be accessed using the :attr:`forward` and :attr:`backward` shortcut attributes. Individual components of the collocation solution can be accessed by indexing this object. The solution can be evaluated at transformed coordinates by calling the object like a function or using the :meth:`eval` method (both are equivalent).
+    Solution to a BVP. This class collects the collocation solution, coordinate transform and coordinate scaling together. The collocation solution (parametrised by the internal coordinate) can be accessed using the :attr:`solution` attribute and the components of the coordinate transform can be accessed using the :attr:`forward` and :attr:`backward` shortcut attributes. Indexing a :class:`BVPSolution` object returns a new :class:`BVPSolution` object with 1-dimensional collocation solution corresponding to the given index and the same coordinate transform.
 
-    .. warning::
-        Indexing a :class:`BVPSolution` object returns components of the solution which are parametrised by the internal coordinate whereas evaluating a :class:`BVPSolution` object evaluates it at points in the transformed coordinate. Therefore :code:`sol[i](x)` is not the same as :code:`sol(x)[i]`. The first is evaluated at points *x* in the internal coordinate and the second is evaluated at points *x* in the transformed coordinate.
+    The solution can be evaluated at internal coordinates by using the :meth:`evaluate_internal` method or by calling the object like a function. The solution can be evaluated at transformed coordinates by using the :meth:`eval` method.
     '''
     def __init__(self, N, degree, intervals, continuous):
         self.N = N
@@ -288,14 +337,16 @@ class BVPSolution():
         self.transform = CollocationSolution(2, degree, np.linspace(0,1,intervals+1), continuous=[True, False])
         self.collocation_points = self.solution.collocation_points
         self.dimension = self.solution.dimension + self.transform.dimension
-        self.forward = self.transform.components[0]
-        self.backward = self.transform.components[1]
+        self.forward = self.transform[0]
+        self.backward = self.transform[1]
 
     def __call__(self, s):
-        return self.eval(s)
+        return self.evaluate_internal(s)
 
     def __getitem__(self, n):
-        return self.solution.components[n]
+        component = BVPSolution(1, self.degree, self.intervals, self.continuous[n])
+        component.update_coeffs(np.concatenate([self.solution[n].coeffs, self.transform.get_coeffs(), np.array([self.scale])]))
+        return component
 
     def state(self):
         '''
@@ -311,19 +362,25 @@ class BVPSolution():
         self.transform.update_coeffs(coeffs[-1-self.transform.dimension:-1])
         self.scale = coeffs[-1]
 
+    def evaluate_internal(self, t):
+        '''
+        Evaluate the collocation solution at internal coordinate points *t*. Equivalent to calling the object like a function.
+        '''
+        return self.solution(t)
+
     def eval(self, s):
         '''
-        Evaluate the collocation solution at transformed points *s*. Equivalently, one can call the object like a function.
+        Evaluate the collocation solution at transformed points *s*.
         '''
         a = self.forward(0)
         b = self.forward(1)
-        s -= a
-        s /= b-a
-        return self.solution(self.backward(s))
+        x = s-a
+        x /= b-a
+        return self.solution(self.backward(x))
 
     def transformed_coordinate(self, t):
         '''
-        Returns the coordinate transform evaluated at *t*
+        Returns the coordinate transform evaluated at *t*. Alias of :attr:`forward`.
         '''
         return self.forward(t)
 
@@ -338,6 +395,17 @@ class BVPSolution():
         Returns the value in [0,1] that corresponds to the delayed value. The delay must be one of the variables of the system with index *delay_index*.
         '''
         return self.backward(self[delay_index](x))
+
+    def scaled_antiderivative(self, x):
+        '''
+        Return the integral of the collocation solution with respect to the transformed coordinate.
+        '''
+        result = np.zeros((self.N, x.shape[0]))
+        for n in range(self.N):
+            result[n] = (self.forward.deriv()*self.solution[n]).antiderivative(x)
+        if self.N == 1:
+            result = np.reshape(result, -1)
+        return result
 
     def derivative_wrt_current(self, x, jac=None, nonautonomous_jac=None, sparse=True):
         '''
@@ -445,9 +513,9 @@ class BVPSolution():
         Jj = np.zeros((dim*K,self.N*K))
         for k in range(K):
             Jj[k:dim*K:K, k:self.N*K:K] = jac(x[k], self)
-        derivative_wrt_sigma = np.concatenate([np.diag(self[n].derivative(sigma_t)) for n in range(self.N)], axis=0)
+        derivative_wrt_sigma = np.concatenate([np.diag(self.solution[n].derivative(sigma_t)) for n in range(self.N)], axis=0)
         sigma_prime = np.zeros((self.collocation_points.shape[0], self.solution.dimension))
-        sigma_prime[:,start:end] = diags((self.backward.derivative(sigma_x)), format='csr').dot(self[delay_index].eval_matrix(x))
+        sigma_prime[:,start:end] = diags((self.backward.derivative(sigma_x)), format='csr').dot(self.solution[delay_index].eval_matrix(x))
         M = csr_matrix(derivative_wrt_sigma).dot(csc_matrix(sigma_prime))
         M = csc_matrix(M) + csc_matrix(self.solution.eval_matrix(sigma_t))
         J = csr_matrix(Jj).dot(M)

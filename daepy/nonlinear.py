@@ -60,7 +60,7 @@ def fsolve(fun, x0, jac=None, method='nleqres', tol=1e-8, maxiter=100, disp=Fals
         m += inner_iterations
         if disp:
             # print(m, cost, l)
-            print('{:<5d} {:<15e} {:<f}'.format(m, cost, l))
+            print('{:<5d} {:<15e} {:<e}'.format(m, cost, l))
 
         if method=='lm':
             l /= 4

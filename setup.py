@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="daepy",
-    version="0.1",
+    version="1.0",
     author="Alastair Flynn",
     author_email="contact@alastairflynn.com",
     description="A Python library for solving boundary value problems of differential algebraic equations with advanced and retarded (forward and backward) delays",
@@ -25,5 +25,5 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
     python_requires='>=3.5',
-    install_requires=['numpy>=1.4.0', 'scipy>=1.0.0', 'dill'],
+    install_requires=['numpy>=1.4.0', 'scipy>=1.0.0', 'matplotlib>=3.0', 'dill'],
 )
