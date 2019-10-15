@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="daepy",
-    version="1.0",
+    version="1.0.1",
     author="Alastair Flynn",
     author_email="contact@alastairflynn.com",
     description="A Python library for solving boundary value problems of differential algebraic equations with advanced and retarded (forward and backward) delays",

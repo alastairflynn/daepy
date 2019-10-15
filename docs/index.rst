@@ -10,7 +10,7 @@ DAEpy is a Python library for solving boundary value problems of differential al
 
 This library was developed at `LCVMM <https://lcvmwww.epfl.ch/>`_. If you find it useful, please cite it [:download:`BibTeX <DAEpy.bib>`]:
 
-  Alastair Flynn. DAEpy: a Python library for solving boundary value problems of differential algebraic equations with advanced and retarded (forward and backward) delays. version 1.0. LCVMM, EPFL. 2019. url: https://lcvmwww.epfl.ch/software/daepy/.
+  Alastair Flynn. DAEpy: a Python library for solving boundary value problems of differential algebraic equations with advanced and retarded (forward and backward) delays. version 1.0.1. LCVMM, EPFL. 2019. url: https://lcvmwww.epfl.ch/software/daepy/.
 
 Installation
 ============
