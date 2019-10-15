@@ -221,13 +221,16 @@ class BVP():
 
     def initial_solution(self, sol):
         '''
-        Set the initial solution to :class:`BVPSolution` *sol*.
+        Set the initial solution to :class:`BVPSolution` *sol* if compatible, otherwise use *sol* to construct an initial guess.
         '''
-        self.bvpsol = sol
+        if self.bvpsol.N == sol.N and self.bvpsol.intervals == sol.intervals and self.bvpsol.degree == sol.degree and self.bvpsol.continuous == sol.continuous:
+            self.bvpsol = sol
+        else:
+            self.initial_guess(sol, sol.transform)
 
     def initial_guess(self, fun_list, transform=None, initial_interval=None):
         '''
-        Determine the initial polynomial coefficients from guesses for the variables given as a list of functions and, optionally, an initial coordinate transform and initial solution interval.
+        Determine the initial polynomial coefficients from guesses for the variables given as a list of functions and, optionally, an initial coordinate transform and initial solution interval. If *transform* is given then *initial_interval* is ignored and the initial functions are assumed to be parametrised by the internal coordinate. If *transform* is :code:`None` then the functions are assumed to be parametrised by the transformed coordinate.
         '''
         if transform is None:
             print('Calculating initial transform...')
@@ -247,7 +250,7 @@ class BVP():
         '''
         self.bvpsol.transform.update_coeffs(transform_coeffs[:-1])
         self.bvpsol.scale = transform_coeffs[-1]
-        for n in range(self.dae.N):
+        for n in range(self.dae.N): ## CHECK!!
             self.bvpsol.solution.components[n].interpolate(lambda t: fun_list[n](self.bvpsol.transform.components[0](t) / self.bvpsol.transform.components[0](1)))
 
         tres0 = self.monitor(self.collocation_points) - self.bvpsol.transform.components[0].derivative(self.collocation_points)
