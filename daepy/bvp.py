@@ -45,7 +45,7 @@ class BVP():
 
     def continuation(self, param, method='pseudo_arclength', steps=1, stepsize=1.0, target=None, tol=1e-8, maxiter=100, disp=False, callback=None):
         '''
-        Perform a continuation run starting from parameter value *param* where method is one of
+        Perform a continuation run starting from parameter value *param* where *method* is one of
 
         * `'pseudo_arclength'` the pseudo-arclength method [3]_ (the default)
         * `'naive'` naive continuation with no predictive step
@@ -56,6 +56,9 @@ class BVP():
 
         .. note::
             The *bvp* must have been initialised with a *dae* object that defines the :meth:`.update_parameter` method and all the jacobian methods. In the future, continuation using a finite difference approximation of the jacobian may be supported although it would still be strongly recommended to use an analytic jacobian, if available.
+
+        .. note::
+            When using the `'pseudo_arclength'` method, setting a *target* or expilicity giving *steps* does not guarantee that the parameter value of the solution will correspond to the given value. If you wish to use parameter continuation to reach a specific parameter value, specify *target* or give explicit *steps* to get close to the desired parameter value and then use :meth:`solve` with the exact parameter value.
 
         .. [3] E. Allgower and K. Georg. *Introduction to Numerical Continuation Methods*. Classics in Applied Mathematics. Society for Industrial and Applied Mathematics, January 2003.
         '''

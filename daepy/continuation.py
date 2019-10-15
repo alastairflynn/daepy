@@ -6,12 +6,12 @@ from .nonlinear import fsolve
 
 class BVPContinuation():
     '''
-    Used to perform continuation runs. It is initialised with a :class:`.BVP` *bvp* and method is one of
+    Used to perform continuation runs. It is initialised with a :class:`.BVP` *bvp* and *method* is one of
 
     * `'pseudo_arclength'` the pseudo-arclength method [1]_ (the default)
     * `'naive'` naive continuation with no predictive step
 
-    Once initialised, a continuation run may be performed using the :meth:`continuation_run` method. See also :meth:`.BVP.continuation_run`.
+    Once initialised, a continuation run may be performed using the :meth:`continuation_run` method.
 
     .. note::
         The *bvp* must have been initialised with a *dae* object that defines the :meth:`.update_parameter` method and all the jacobian methods. In the future, continuation using a finite difference approximation of the jacobian may be supported although it would still be strongly recommended to use an analytic jacobian, if available.
@@ -100,6 +100,9 @@ class BVPContinuation():
         Perform a continuation run where *x0* is the initial guess (typically one would use :code:`bvp.state()`), *p0* is the initial value of the parameter, *steps* is either a maximum number of steps or a numpy array of parameter values which determine the steps explicitly, *stepsize* is the initial stepsize (the pseudo-arclength method will adapt the stepsize, ignored if steps are given explicitly), *target* is a value for the parameter at which the continuation will stop (optional), *tol* is the required solution tolerance, *maxiter* is the maximum number of iterations for the nonlinear solver, *disp* determines whether to print progress messages and *callback(parameter, solution)* is a function that will be called before each continuation step, for example to draw a new line on a plot at each step (optional).
 
         The function returns the final solution and final parameter value. The `bvp` object is updated during the continuation run so :code:`bvp.state()` will correspond to the final solution and the parameter value in `bvp` will correspond to the final parameter value as well.
+
+        .. note::
+            When using the :code:`pseudo_arclength` method, setting a *target* or expilicity giving *steps* does not guarantee that the parameter value of the solution will correspond to the given value. If you wish to use parameter continuation to reach a specific parameter value, specify *target* or give explicit *steps* to get close to the desired parameter value and then use :meth:`.solve` with the exact parameter value.
         '''
         x, m = fsolve(self.bvp.eval, x0, jac=self.bvp.jac, method='nleqres', tol=tol, maxiter=maxiter, disp=False)
         y = np.concatenate([x, np.array([p0])])
