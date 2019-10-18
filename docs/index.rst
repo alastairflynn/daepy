@@ -103,7 +103,7 @@ The solution is a :class:`.BVPSolution` object. A continuation run can be perfor
 Examples
 ========
 
-On the :ref:`examples <examples>` page there is a :ref:`basic usage example <basic_example>` and a :ref:`parameter continuation <continuation_example>` example.
+There is a :ref:`basic usage example <basic_example>` and a :ref:`parameter continuation <continuation_example>` example.
 
 Reference
 =========

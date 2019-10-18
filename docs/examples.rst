@@ -1,12 +1,3 @@
-.. _examples:
-
-Examples
-========
-
-You will need to have `matplotlib <https://matplotlib.org/>`_ installed to run these examples. ::
-
-  pip install matplotlib
-
 .. _basic_example:
 
 Basic usage example
