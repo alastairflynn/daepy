@@ -1,7 +1,9 @@
 build/
 dist/
+daepy/cheby/build/
 *.egg-info/
 *.DS_Store
+*.so
 *__pycache__*
 docs/_build
 test/test.npz

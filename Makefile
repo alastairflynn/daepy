@@ -1,6 +1,4 @@
 build: setup.py
-	rm -rf daepy/cheby/build
-	rm daepy/cheby/cheby.cpython*.so
 	python setup.py sdist bdist_wheel
 
 .PHONY: upload

@@ -24,5 +24,5 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
     python_requires='>=3.5',
-    install_requires=['numpy>=1.4.0', 'scipy>=1.0.0', 'matplotlib>=3.0', 'dill'],
+    install_requires=['numpy>=1.4.0', 'scipy>=1.0.0', 'matplotlib>=3.0', 'dill', 'cython'],
 )
