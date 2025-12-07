@@ -1,9 +1,9 @@
-build: setup.py
-	python setup.py sdist bdist_wheel
+build:
+	python -m build
 
 .PHONY: upload
 upload:
-	twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+	twine upload --repository testpypi dist/*
 
 .PHONY: publish
 publish:

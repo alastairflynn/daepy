@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools >= 77.0.3", "cython", "scipy"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "daepy"
+version = "1.0.2"
+authors = [
+  { name="Alastair Flynn", email="contact@alastairflynn.com" },
+]
+description = "A Python library for solving boundary value problems of differential algebraic equations with advanced and retarded (forward and backward) delays"
+readme = "README.md"
+requires-python = ">=3.5"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+dependencies = [
+  "numpy>=1.4.0",
+  "scipy>=1.0.0",
+  "matplotlib>=3.0",
+  "dill"
+]
+
+[project.urls]
+"Homepage" = "https://alastairflynn.com/daepy"
+"Documentation" = "https://alastairflynn.com/daepy"
+"Source Code" = "https://github.com/alastairflynn/daepy"
+
+[tool.setuptools]
+ext-modules = [
+    { name = "daepy.cheby", sources = ["daepy/cheby/cheby.pyx"] }
+]
