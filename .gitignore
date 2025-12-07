@@ -4,4 +4,4 @@ dist/
 *.DS_Store
 *__pycache__*
 docs/_build
-daepy/chaby.c*
+test/test.npz

@@ -2,7 +2,7 @@ import numpy as np
 from numpy.polynomial.chebyshev import chebmul, chebfit, chebvander, chebder
 from scipy.special import eval_chebyu, roots_legendre
 from scipy.linalg import block_diag, inv
-from .cheby import evaluate_piecewise, evaluation_matrix, evaluate_derivative, evaluate_antiderivative
+from daepy.cheby import evaluate_piecewise, evaluation_matrix, evaluate_derivative, evaluate_antiderivative
 
 class CollocationSolution():
     '''

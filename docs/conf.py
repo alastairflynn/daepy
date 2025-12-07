@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath('..'))
 # -- Project information -----------------------------------------------------
 
 project = 'DAEpy'
-copyright = '2019, Alastair Flynn'
+copyright = '2025, Alastair Flynn'
 author = 'Alastair Flynn'
 
 

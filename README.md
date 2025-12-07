@@ -18,4 +18,4 @@ pip install scikit-umfpack
 
 ## Documentation
 
-[Documentation](https://lcvmwww.epfl.ch/software/daepy) is available online, including [basic usage](https://lcvmwww.epfl.ch/software/daepy/index.html#usage) and some [examples](https://lcvmwww.epfl.ch/software/daepy/examples.html).
+[Documentation](https://alastairflynn.com/daepy) is available online, including [basic usage](https://alastairflynn.com/daepy/index.html#usage) and some [examples](https://alastairflynn.com/daepy/examples.html).

@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.linalg import norm, det
-from scipy.sparse import csr_matrix, bmat
+from scipy.sparse import csr_matrix, block_array
 from scipy.sparse.linalg import spsolve
 from .nonlinear import fsolve
 
@@ -40,7 +40,7 @@ class BVPContinuation():
         self.bvp.dae.update_parameter(y[-1])
         jac = self.bvp.jac(y[:-1])
         param_jac = self.bvp.param_jac(self.bvp.collocation_points, self.bvp.bvpsol)
-        return bmat([[jac, param_jac[:,None]], [self.tangent[None,:-1], self.tangent[-1]]], format='csc')
+        return block_array([[jac, param_jac[:,None]], [self.tangent[None,:-1], np.array(self.tangent[-1], ndmin=2)]], format='csc')
 
     def find_tangent(self, y):
         '''
@@ -57,7 +57,7 @@ class BVPContinuation():
 
     def continuation_step(self, y0, d, stepsize=1.0, adaptive=True, target=None, tol=1e-8, maxiter=100):
         '''
-        Perform a sing continuation step.
+        Perform a single continuation step.
         '''
         if self.method == 'pseudo_arclength':
             self.y0 = np.copy(y0)
@@ -81,18 +81,18 @@ class BVPContinuation():
                     old_res = norm(self.eval(y0))
                     res = norm(self.eval(y1))
 
-            try:
-                y, m = fsolve(self.eval, y1, jac=self.jac, method='nleqres', tol=tol, maxiter=maxiter, disp=False)
-                result = [y, m, y[-1] - y0[-1], determinant]
-            except:
-                result = [y0, 0, 0.0, determinant]
+            # try:
+            y, m = fsolve(self.eval, y1, jac=self.jac, method='nleqres', tol=tol, maxiter=maxiter, disp=False)
+            result = (y, m, y[-1] - y0[-1], determinant)
+            # except Exception:
+            #     result = (y0, 0, 0.0, determinant)
         else:
             p = y0[-1] + stepsize
             self.bvp.dae.update_parameter(p)
 
             x, m = fsolve(self.bvp.eval, y0[:-1], jac=self.bvp.jac, method='nleqres', tol=tol, maxiter=maxiter, disp=False)
             y = np.concatenate([x, np.array([p])])
-            result = [y, m, stepsize, d]
+            result = (y, m, stepsize, d)
         return result
 
     def continuation_run(self, x0, p0, steps=1, stepsize=1.0, target=None, tol=1e-8, maxiter=100, disp=False, callback=None):

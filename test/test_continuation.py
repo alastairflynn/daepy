@@ -1,5 +1,3 @@
-from sys import path
-path.insert(0, '..')
 import numpy as np
 from test_system import DAE
 from daepy import BVP

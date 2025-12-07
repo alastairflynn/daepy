@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.sparse import bmat, csc_matrix, csr_matrix, diags
+from scipy.sparse import block_array, csc_matrix, csr_matrix, diags
 import dill
 from multiprocessing import Pool
 from matplotlib import pyplot as plt
@@ -106,7 +106,7 @@ class BVP():
         cc_jac = self.bvpsol.solution.continuity_jacobian()
         cc_transform_jac = self.bvpsol.transform.continuity_jacobian()
 
-        J = bmat([[jac, transform_jac, None], [t_jac, t_transform_jac, t_scale_jac[:,None]], [cc_jac, None, None], [None, cc_transform_jac, None], [bv_jac, bv_transform_jac, None]], format='csc')
+        J = block_array([[jac, transform_jac, None], [t_jac, t_transform_jac, t_scale_jac[:,None]], [cc_jac, None, None], [None, cc_transform_jac, None], [bv_jac, bv_transform_jac, None]], format='csc')
 
         J.eliminate_zeros()
 
@@ -325,7 +325,7 @@ class BVP():
 
         bv_jac = np.matmul(J0, B0) + np.matmul(J1, B1)
 
-        return bmat([[J, scale_jac[:,None]], [self.bvpsol.transform.continuity_jacobian(), None], [bv_jac, None]], format='csc')
+        return block_array([[J, scale_jac[:,None]], [self.bvpsol.transform.continuity_jacobian(), None], [bv_jac, None]], format='csc')
 
 class BVPSolution():
     '''
